@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Stocks{% endblock %}
+
+{% block content %}
+<!-- Back link -->
+<a href="/" class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Back to stocks
+</a>
+
+<h1 class="text-3xl font-bold text-white mb-2">Compare Stocks</h1>
+<p class="text-gray-400 mb-8">Side-by-side Napkin Math analysis of up to 3 NGX stocks.</p>
+
+<!-- Add Stock Form -->
+<div class="flex flex-wrap items-center gap-3 mb-8">
+    <form id="add-stock-form" class="flex gap-2" onsubmit="addStock(event)">
+        <input
+            type="text"
+            id="add-ticker"
+            placeholder="Add ticker (e.g. DANGCEM)"
+            class="px-4 py-2 bg-navy-800 border border-slate-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
+        >
+        <button type="submit" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors">
+            Add
+        </button>
+    </form>
+    {% if results|length > 0 %}
+    <div class="flex gap-2">
+        {% for r in results %}
+        <span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm rounded-full">
+            {{ r.ticker }}
+            <a href="/compare?tickers={{ results|map(attribute='ticker')|reject('equalto', r.ticker)|join(',') }}"
+               class="hover:text-white">&times;</a>
+        </span>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{% if results|length == 0 %}
+<!-- Empty State -->
+<div class="text-center py-20">
+    <div class="text-6xl mb-4 opacity-30">&#x1F4CA;</div>
+    <p class="text-gray-400 text-lg mb-2">No stocks to compare yet</p>
+    <p class="text-gray-500 text-sm">Add 2-3 stock tickers above to see a side-by-side analysis.</p>
+</div>
+
+{% elif results|length == 1 %}
+<div class="text-center py-12 bg-navy-800 rounded-xl border border-slate-700/50">
+    <p class="text-gray-400 mb-2">You have 1 stock selected. Add at least 1 more to compare.</p>
+    <a href="/analyze/{{ results[0].ticker }}" class="text-emerald-400 hover:text-emerald-300 text-sm">
+        Or view {{ results[0].ticker }} individual analysis &rarr;
+    </a>
+</div>
+
+{% else %}
+<!-- Comparison Table -->
+<div class="overflow-x-auto">
+    <table class="w-full">
+        <!-- Header Row: Stock Names + Recommendations -->
+        <thead>
+            <tr class="border-b border-slate-700">
+                <th class="py-4 px-4 text-left text-sm font-medium text-gray-400 w-48">Metric</th>
+                {% for r in results %}
+                <th class="py-4 px-4 text-center min-w-[200px]">
+                    <a href="/analyze/{{ r.ticker }}" class="text-lg font-bold text-white hover:text-emerald-400 transition-colors">
+                        {{ r.ticker }}
+                    </a>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ r.company_name }}</p>
+                    <div class="mt-2">
+                        {% if r.recommendation.value == "BUY" %}
+                        <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm font-bold rounded-full border border-emerald-500/30">BUY</span>
+                        {% elif r.recommendation.value == "HOLD" %}
+                        <span class="px-3 py-1 bg-amber-500/20 text-amber-400 text-sm font-bold rounded-full border border-amber-500/30">HOLD</span>
+                        {% else %}
+                        <span class="px-3 py-1 bg-red-500/20 text-red-400 text-sm font-bold rounded-full border border-red-500/30">SELL</span>
+                        {% endif %}
+                    </div>
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Score Summary Row -->
+            <tr class="border-b border-slate-700/50 bg-navy-800/50">
+                <td class="py-3 px-4 text-sm font-medium text-gray-400">Score</td>
+                {% for r in results %}
+                <td class="py-3 px-4 text-center">
+                    <span class="text-emerald-400 text-sm font-semibold">{{ r.green_count }}G</span>
+                    <span class="text-gray-500 mx-1">/</span>
+                    <span class="text-amber-400 text-sm font-semibold">{{ r.yellow_count }}Y</span>
+                    <span class="text-gray-500 mx-1">/</span>
+                    <span class="text-red-400 text-sm font-semibold">{{ r.red_count }}R</span>
+                </td>
+                {% endfor %}
+            </tr>
+
+            <!-- Metric Rows -->
+            {% set metric_names = results[0].metrics|map(attribute='name')|list %}
+            {% for i in range(metric_names|length) %}
+            <tr class="border-b border-slate-700/30 hover:bg-navy-800/30 transition-colors">
+                <td class="py-4 px-4 text-sm font-medium text-gray-300">{{ metric_names[i] }}</td>
+                {% for r in results %}
+                {% set m = r.metrics[i] %}
+                <td class="py-4 px-4 text-center">
+                    <div class="inline-flex flex-col items-center gap-1">
+                        <!-- Signal badge -->
+                        {% if m.signal.value == "green" %}
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        {% elif m.signal.value == "yellow" %}
+                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        {% else %}
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                        {% endif %}
+
+                        <!-- Value -->
+                        {% if m.current_value is not none %}
+                        <span class="text-sm font-semibold text-white">
+                            {% if m.format_type == "currency" %}
+                                {{ format_naira(m.current_value) }}
+                            {% elif m.format_type == "percent" %}
+                                {{ "%.1f"|format(m.current_value) }}%
+                            {% elif m.format_type == "ratio" %}
+                                {{ "%.2f"|format(m.current_value) }}&times;
+                            {% else %}
+                                &#x20A6;{{ "%.2f"|format(m.current_value) }}
+                            {% endif %}
+                        </span>
+                        {% else %}
+                        <span class="text-sm text-gray-500">N/A</span>
+                        {% endif %}
+
+                        <!-- YoY -->
+                        {% if m.yoy_change is not none %}
+                        <span class="text-xs {% if m.yoy_change > 0 %}text-emerald-400{% elif m.yoy_change < 0 %}text-red-400{% else %}text-gray-500{% endif %}">
+                            {% if m.yoy_change > 0 %}&#x2191;{% elif m.yoy_change < 0 %}&#x2193;{% else %}&#x2192;{% endif %}
+                            {{ "%.1f"|format(m.yoy_change) }}%
+                        </span>
+                        {% endif %}
+                    </div>
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function addStock(e) {
+        e.preventDefault();
+        const input = document.getElementById('add-ticker');
+        const ticker = input.value.trim().toUpperCase();
+        if (!ticker) return;
+
+        const params = new URLSearchParams(window.location.search);
+        const existing = params.get('tickers') || '';
+        const tickers = existing ? existing.split(',') : [];
+
+        if (tickers.includes(ticker)) {
+            input.value = '';
+            return;
+        }
+        if (tickers.length >= 3) {
+            alert('Maximum 3 stocks for comparison');
+            return;
+        }
+
+        tickers.push(ticker);
+        window.location.href = '/compare?tickers=' + tickers.join(',');
+    }
+</script>
+{% endblock %}

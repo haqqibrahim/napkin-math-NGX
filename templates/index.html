@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="text-center py-12">
+    <h1 class="text-4xl sm:text-5xl font-bold text-white mb-4">
+        Napkin Math for <span class="text-emerald-400">NGX Stocks</span>
+    </h1>
+    <p class="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+        Evaluate Nigerian stocks using 8 key financial metrics.
+        Get instant Buy, Hold, or Sell recommendations backed by real data.
+    </p>
+
+    <!-- Search Bar -->
+    <div class="max-w-xl mx-auto relative">
+        <div class="relative">
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Search by ticker or company name (e.g. DANGCEM, MTN)"
+                class="w-full px-5 py-4 bg-navy-800 border border-slate-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg"
+                autocomplete="off"
+            >
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+        <!-- Autocomplete Dropdown -->
+        <div id="search-results" class="absolute w-full mt-2 bg-navy-800 border border-slate-600 rounded-xl shadow-2xl z-50 hidden max-h-80 overflow-y-auto">
+        </div>
+    </div>
+</div>
+
+<!-- Compare Section -->
+<div id="compare-bar" class="hidden fixed bottom-0 left-0 right-0 bg-navy-900 border-t border-slate-700 p-4 z-40">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-400">Selected for comparison:</span>
+            <div id="compare-chips" class="flex gap-2"></div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="clearCompare()" class="text-sm text-gray-400 hover:text-white transition-colors">Clear</button>
+            <button onclick="goCompare()" class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors">
+                Compare Stocks
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Top 30 NGX Stocks -->
+<div class="mt-8">
+    <h2 class="text-xl font-semibold text-white mb-6">Top 30 NGX Stocks</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {% for ticker, name in top_stocks %}
+        <div class="group relative bg-navy-800 border border-slate-700/50 rounded-lg p-4 hover:border-emerald-500/50 hover:bg-navy-800/80 transition-all cursor-pointer"
+             onclick="window.location.href='/analyze/{{ ticker }}'">
+            <div class="flex items-start justify-between">
+                <div>
+                    <span class="text-sm font-bold text-emerald-400">{{ ticker }}</span>
+                    <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ name }}</p>
+                </div>
+                <button onclick="event.stopPropagation(); toggleCompare('{{ ticker }}')"
+                        class="compare-btn opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-slate-700"
+                        data-ticker="{{ ticker }}"
+                        title="Add to comparison">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="mt-16 mb-8">
+    <h2 class="text-xl font-semibold text-white mb-6">How Napkin Math Works</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-navy-800 border border-slate-700/50 rounded-lg p-5">
+            <div class="text-2xl mb-3">1&#x20E3;</div>
+            <h3 class="text-sm font-semibold text-white mb-2">Select a Stock</h3>
+            <p class="text-xs text-gray-400">Pick any NGX-listed company by ticker or search by name.</p>
+        </div>
+        <div class="bg-navy-800 border border-slate-700/50 rounded-lg p-5">
+            <div class="text-2xl mb-3">2&#x20E3;</div>
+            <h3 class="text-sm font-semibold text-white mb-2">Fetch Financials</h3>
+            <p class="text-xs text-gray-400">We pull Revenue, PAT, EPS, DPS, D/E, ROE, and Cash Flow data automatically.</p>
+        </div>
+        <div class="bg-navy-800 border border-slate-700/50 rounded-lg p-5">
+            <div class="text-2xl mb-3">3&#x20E3;</div>
+            <h3 class="text-sm font-semibold text-white mb-2">Evaluate 8 Metrics</h3>
+            <p class="text-xs text-gray-400">Each metric is scored green, yellow, or red based on proven thresholds.</p>
+        </div>
+        <div class="bg-navy-800 border border-slate-700/50 rounded-lg p-5">
+            <div class="text-2xl mb-3">4&#x20E3;</div>
+            <h3 class="text-sm font-semibold text-white mb-2">Get Your Signal</h3>
+            <p class="text-xs text-gray-400">Receive a clear Buy, Hold, or Sell recommendation with explanations.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let compareList = [];
+    const MAX_COMPARE = 3;
+
+    // Search autocomplete
+    const searchInput = document.getElementById('search-input');
+    const searchResults = document.getElementById('search-results');
+    let debounceTimer;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const query = this.value.trim();
+        if (query.length < 1) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+        debounceTimer = setTimeout(() => fetchResults(query), 200);
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const query = this.value.trim().toUpperCase();
+            if (query) {
+                window.location.href = '/analyze/' + encodeURIComponent(query);
+            }
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.add('hidden');
+        }
+    });
+
+    async function fetchResults(query) {
+        try {
+            const resp = await fetch('/api/search?q=' + encodeURIComponent(query));
+            const data = await resp.json();
+            if (data.length === 0) {
+                searchResults.classList.add('hidden');
+                return;
+            }
+            searchResults.innerHTML = data.map(item =>
+                `<a href="/analyze/${item.ticker}"
+                    class="flex items-center justify-between px-4 py-3 hover:bg-slate-700/50 transition-colors first:rounded-t-xl last:rounded-b-xl">
+                    <div>
+                        <span class="text-sm font-semibold text-emerald-400">${item.ticker}</span>
+                        <span class="text-sm text-gray-400 ml-2">${item.name}</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </a>`
+            ).join('');
+            searchResults.classList.remove('hidden');
+        } catch (err) {
+            console.error('Search error:', err);
+        }
+    }
+
+    // Compare functionality
+    function toggleCompare(ticker) {
+        const idx = compareList.indexOf(ticker);
+        if (idx > -1) {
+            compareList.splice(idx, 1);
+        } else if (compareList.length < MAX_COMPARE) {
+            compareList.push(ticker);
+        }
+        updateCompareUI();
+    }
+
+    function clearCompare() {
+        compareList = [];
+        updateCompareUI();
+    }
+
+    function goCompare() {
+        if (compareList.length >= 2) {
+            window.location.href = '/compare?tickers=' + compareList.join(',');
+        }
+    }
+
+    function updateCompareUI() {
+        const bar = document.getElementById('compare-bar');
+        const chips = document.getElementById('compare-chips');
+
+        // Update button states
+        document.querySelectorAll('.compare-btn').forEach(btn => {
+            const ticker = btn.dataset.ticker;
+            if (compareList.includes(ticker)) {
+                btn.classList.add('!opacity-100');
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+            } else {
+                btn.classList.remove('!opacity-100');
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>`;
+            }
+        });
+
+        if (compareList.length > 0) {
+            bar.classList.remove('hidden');
+            chips.innerHTML = compareList.map(t =>
+                `<span class="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/20 text-emerald-400 text-sm rounded-full">
+                    ${t}
+                    <button onclick="event.stopPropagation(); toggleCompare('${t}')" class="hover:text-white">&times;</button>
+                </span>`
+            ).join('');
+        } else {
+            bar.classList.add('hidden');
+        }
+    }
+</script>
+{% endblock %}

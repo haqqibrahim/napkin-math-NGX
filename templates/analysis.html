@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ result.ticker }} Analysis{% endblock %}
+
+{% block content %}
+<!-- Back link -->
+<a href="/" class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+    </svg>
+    Back to stocks
+</a>
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div>
+        <div class="flex items-center gap-3 mb-2">
+            <h1 class="text-3xl font-bold text-white">{{ result.ticker }}</h1>
+            {% if result.recommendation.value == "BUY" %}
+            <span class="px-4 py-1.5 bg-emerald-500/20 text-emerald-400 text-lg font-bold rounded-full border border-emerald-500/30">BUY</span>
+            {% elif result.recommendation.value == "HOLD" %}
+            <span class="px-4 py-1.5 bg-amber-500/20 text-amber-400 text-lg font-bold rounded-full border border-amber-500/30">HOLD</span>
+            {% else %}
+            <span class="px-4 py-1.5 bg-red-500/20 text-red-400 text-lg font-bold rounded-full border border-red-500/30">SELL</span>
+            {% endif %}
+        </div>
+        <p class="text-gray-400">{{ result.company_name }}</p>
+        {% if result.current_year %}
+        <p class="text-xs text-gray-500 mt-1">Comparing FY {{ result.current_year }} vs FY {{ result.previous_year }}</p>
+        {% endif %}
+    </div>
+    <div class="flex gap-2">
+        <a href="/compare?tickers={{ result.ticker }}"
+           class="px-4 py-2 bg-navy-800 border border-slate-600 text-sm text-gray-300 rounded-lg hover:border-emerald-500/50 transition-colors">
+            + Compare with another stock
+        </a>
+    </div>
+</div>
+
+<!-- Score Summary -->
+<div class="bg-navy-800 border border-slate-700/50 rounded-xl p-6 mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <div class="flex items-center gap-4">
+            <div class="flex gap-1">
+                {% for m in result.metrics %}
+                {% if m.signal.value == "green" %}
+                <div class="w-3 h-8 rounded-sm bg-emerald-500"></div>
+                {% elif m.signal.value == "yellow" %}
+                <div class="w-3 h-8 rounded-sm bg-amber-500"></div>
+                {% else %}
+                <div class="w-3 h-8 rounded-sm bg-red-500"></div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <div>
+                <div class="flex items-center gap-3 text-sm">
+                    <span class="text-emerald-400 font-semibold">{{ result.green_count }} Green</span>
+                    <span class="text-amber-400 font-semibold">{{ result.yellow_count }} Yellow</span>
+                    <span class="text-red-400 font-semibold">{{ result.red_count }} Red</span>
+                </div>
+            </div>
+        </div>
+        <div class="sm:border-l sm:border-slate-700 sm:pl-6">
+            <p class="text-sm text-gray-300">{{ result.summary }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Metric Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    {% for metric in result.metrics %}
+    <div class="bg-navy-800 border rounded-xl p-5
+        {% if metric.signal.value == 'green' %}border-emerald-500/30{% elif metric.signal.value == 'yellow' %}border-amber-500/30{% else %}border-red-500/30{% endif %}">
+        <div class="flex items-start justify-between mb-3">
+            <h3 class="text-sm font-semibold text-white">{{ metric.name }}</h3>
+            {% if metric.signal.value == "green" %}
+            <span class="flex items-center gap-1 text-xs font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                Good
+            </span>
+            {% elif metric.signal.value == "yellow" %}
+            <span class="flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                Neutral
+            </span>
+            {% else %}
+            <span class="flex items-center gap-1 text-xs font-medium text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                Red Flag
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Values -->
+        <div class="flex items-end gap-4 mb-3">
+            {% if metric.current_value is not none %}
+            <div>
+                <p class="text-xs text-gray-500 mb-0.5">Current</p>
+                <p class="text-xl font-bold text-white">
+                    {% if metric.format_type == "currency" %}
+                        {{ format_naira(metric.current_value) }}
+                    {% elif metric.format_type == "percent" %}
+                        {{ "%.1f"|format(metric.current_value) }}%
+                    {% elif metric.format_type == "ratio" %}
+                        {{ "%.2f"|format(metric.current_value) }}&times;
+                    {% else %}
+                        &#x20A6;{{ "%.2f"|format(metric.current_value) }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+            {% if metric.previous_value is not none %}
+            <div>
+                <p class="text-xs text-gray-500 mb-0.5">Previous</p>
+                <p class="text-sm text-gray-400">
+                    {% if metric.format_type == "currency" %}
+                        {{ format_naira(metric.previous_value) }}
+                    {% elif metric.format_type == "percent" %}
+                        {{ "%.1f"|format(metric.previous_value) }}%
+                    {% elif metric.format_type == "ratio" %}
+                        {{ "%.2f"|format(metric.previous_value) }}&times;
+                    {% else %}
+                        &#x20A6;{{ "%.2f"|format(metric.previous_value) }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+            {% if metric.yoy_change is not none %}
+            <div class="ml-auto">
+                {% if metric.yoy_change > 0 %}
+                <span class="text-sm font-semibold text-emerald-400">&#x2191; {{ "%.1f"|format(metric.yoy_change) }}%</span>
+                {% elif metric.yoy_change < 0 %}
+                <span class="text-sm font-semibold text-red-400">&#x2193; {{ "%.1f"|format(metric.yoy_change) }}%</span>
+                {% else %}
+                <span class="text-sm font-semibold text-gray-400">&#x2192; 0%</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <p class="text-xs text-gray-400">{{ metric.explanation }}</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Disclaimer -->
+<div class="bg-navy-800/50 border border-slate-700/30 rounded-xl p-4">
+    <p class="text-xs text-gray-500">
+        <strong class="text-gray-400">Disclaimer:</strong>
+        This analysis is based on the Napkin Math framework — a simplified approach to reading financial reports.
+        It is not financial advice. Always consult a licensed financial advisor before making investment decisions.
+        Past performance does not guarantee future results.
+    </p>
+</div>
+{% endblock %}
