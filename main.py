@@ -100,7 +100,3 @@ async def api_search(q: str = Query(default="", min_length=1)):
     results = search_tickers(q)
     return JSONResponse(content=results)
 
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
